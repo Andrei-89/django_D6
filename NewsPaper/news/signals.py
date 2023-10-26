@@ -13,7 +13,7 @@ from django.contrib.auth.models import User
  
 # в декоратор передаётся первым аргументом сигнал, на который будет реагировать эта функция, и в отправители надо передать также модель
 # при подписки на категорию новостей на почту приходит уведомление о подписке
-# @receiver(post_save, sender=Mailing)
+@receiver(post_save, sender=Mailing)
 def mailing_sabscribe(sender, instance, created, **kwargs):
     send_mail(
         subject=f'«Здравствуй, {instance.subscribers.username} подравляю ты подписался на новости!»',  # имя клиента и дата записи будут в теме для удобства
@@ -23,7 +23,7 @@ def mailing_sabscribe(sender, instance, created, **kwargs):
     )
 
 #При добавлении новой станьи она рассылается на почту подписчикам
-# @receiver(post_save, sender=PostCategory)
+@receiver(post_save, sender=PostCategory)
 def mailing_postcategory(sender, instance, **kwargs):
     users = Mailing.objects.filter(category=instance.category).values_list('subscribers', flat=True)
     subscribers = User.objects.filter(id__in=users)
@@ -56,7 +56,7 @@ def send_mail_to_subscribers(post, sender, instance):
 
 #Раз в неделю подписчикам приходит список всех статей добавленных в течение недели 
 
-# @receiver(post_save, sender=PostCategory)
+@receiver(post_save, sender=PostCategory)
 def mailing_postcategory_week(sender, instance, **kwargs):
     posts = Post.objects.filter(postCategory=instance.category).values('id', 'titel', 'text')
     users = Mailing.objects.filter(category=instance.category).values_list('subscribers', flat=True)
@@ -89,7 +89,7 @@ def mailing_postcategory_week(sender, instance, **kwargs):
         msg.attach_alternative(html_content, "text/html")
         msg.send()
 
-# receiver(post_save, sender=PostCategory)
+receiver(post_save, sender=PostCategory)
 def mailing_postcategory_week(sender, instance, post_id, **kwargs):
     post = Post.objects.get(id=post_id)
     users = Mailing.objects.filter(category=instance.category).values_list('subscribers', flat=True)
