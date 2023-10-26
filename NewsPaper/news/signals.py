@@ -22,11 +22,13 @@ def mailing_sabscribe(sender, instance, created, **kwargs):
         recipient_list = [instance.subscribers.email], # здесь список получателей. Например, секретарь, сам врач и так далее
     )
 
-#При добавлении новой станьи она рассылается на почту подписчикам
-@receiver(post_save, sender=PostCategory)
-def mailing_postcategory(sender, instance, **kwargs):
+#При добавлении новой станьи она рассылается на почту подписчикам (или выбрать шаблон ниже)
+# @receiver(post_save, sender=PostCategory)
+def mailing_postcategory(post, instance, **kwargs):
     users = Mailing.objects.filter(category=instance.category).values_list('subscribers', flat=True)
     subscribers = User.objects.filter(id__in=users)
+        # Получение URL-адреса статьи
+
     for subscriber in subscribers:
         send_mail(
             subject=f'Здравствуй {subscriber}, для тебя появилась новая новость!»',  # имя клиента и дата записи будут в теме для удобства
@@ -36,11 +38,12 @@ def mailing_postcategory(sender, instance, **kwargs):
         )
 
 #При добавлении новой станьи она рассылается на почту подписчикам через шаблон
-# @receiver(post_save, sender=PostCategory)
-def send_mail_to_subscribers(post, sender, instance):
+@receiver(post_save, sender=PostCategory)
+def send_mail_to_subscribers(instance, **kwargs):
+    post = instance.post
     subject = 'Новая статья'
     users = Mailing.objects.filter(category=instance.category).values_list('subscribers', flat=True)
-    html_message = render_to_string('newsletter.html', {'post': post})
+    html_message = render_to_string('subscribers/mailing_post_add.html', {'post': post})
     plain_message = strip_tags(html_message)
     from_email = 'bulanov-rvp@yandex.ru'
     to_emails = [subscriber.email for subscriber in User.objects.filter(id__in=users)]
@@ -49,7 +52,7 @@ def send_mail_to_subscribers(post, sender, instance):
     post_url = post.get_absolute_url()
 
     # Добавление ссылки на статью в содержимое письма
-    html_message += f'<p>Ссылка на статью: <a href="{post_url}">{post.title}</a></p>'
+    html_message += f'<p>Ссылка на статью: <a href="{post_url}">{post.titel}</a></p>'
 
     send_mail(subject, plain_message, from_email, to_emails, html_message=html_message)
 
